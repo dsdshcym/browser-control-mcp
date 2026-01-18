@@ -1,12 +1,21 @@
-import type { ServerMessageRequest } from "@browser-control-mcp/common";
-import { WebsocketClient } from "./client";
+import type { ServerMessageRequest, ExtensionMessage } from "@browser-control-mcp/common";
 import { isCommandAllowed, isDomainInDenyList, COMMAND_TO_TOOL_ID, addAuditLogEntry } from "./extension-config";
 
-export class MessageHandler {
-  private client: WebsocketClient;
+/**
+ * Interface for sending responses back to the MCP server.
+ * This abstraction allows the MessageHandler to work with both the old
+ * WebSocket client architecture and the new server architecture.
+ */
+export interface ResponseSender {
+  sendResourceToServer(resource: ExtensionMessage): Promise<void>;
+  sendErrorToServer(correlationId: string, errorMessage: string): Promise<void>;
+}
 
-  constructor(client: WebsocketClient) {
-    this.client = client;
+export class MessageHandler {
+  private responseSender: ResponseSender;
+
+  constructor(responseSender: ResponseSender) {
+    this.responseSender = responseSender;
   }
 
   public async handleDecodedMessage(req: ServerMessageRequest): Promise<void> {
@@ -103,7 +112,7 @@ export class MessageHandler {
       url,
     });
 
-    await this.client.sendResourceToServer({
+    await this.responseSender.sendResourceToServer({
       resource: "opened-tab-id",
       correlationId,
       tabId: tab.id,
@@ -115,7 +124,7 @@ export class MessageHandler {
     tabIds: number[]
   ): Promise<void> {
     await browser.tabs.remove(tabIds);
-    await this.client.sendResourceToServer({
+    await this.responseSender.sendResourceToServer({
       resource: "tabs-closed",
       correlationId,
     });
@@ -123,7 +132,7 @@ export class MessageHandler {
 
   private async sendTabs(correlationId: string): Promise<void> {
     const tabs = await browser.tabs.query({});
-    await this.client.sendResourceToServer({
+    await this.responseSender.sendResourceToServer({
       resource: "tabs",
       correlationId,
       tabs,
@@ -133,7 +142,7 @@ export class MessageHandler {
   private async sendCurrentTab(correlationId: string): Promise<void> {
     const tabs = await browser.tabs.query({ active: true, currentWindow: true });
     const currentTab = tabs[0];
-    await this.client.sendResourceToServer({
+    await this.responseSender.sendResourceToServer({
       resource: "current-tab",
       correlationId,
       tab: currentTab,
@@ -152,7 +161,7 @@ export class MessageHandler {
     const filteredHistoryItems = historyItems.filter((item) => {
       return !!item.url;
     });
-    await this.client.sendResourceToServer({
+    await this.responseSender.sendResourceToServer({
       resource: "history",
       correlationId,
       historyItems: filteredHistoryItems,
@@ -253,7 +262,7 @@ export class MessageHandler {
     `,
     });
     const { isTruncated, fullText, links, totalLength } = results[0];
-    await this.client.sendResourceToServer({
+    await this.responseSender.sendResourceToServer({
       resource: "tab-content",
       tabId,
       correlationId,
@@ -273,7 +282,7 @@ export class MessageHandler {
       const tabId = tabOrder[newIndex];
       await browser.tabs.move(tabId, { index: newIndex });
     }
-    await this.client.sendResourceToServer({
+    await this.responseSender.sendResourceToServer({
       resource: "tabs-reordered",
       correlationId,
       tabOrder,
@@ -308,7 +317,7 @@ export class MessageHandler {
       });
     }
 
-    await this.client.sendResourceToServer({
+    await this.responseSender.sendResourceToServer({
       resource: "find-highlight-result",
       correlationId,
       noOfResults: findResults.count,
@@ -332,7 +341,7 @@ export class MessageHandler {
       title: groupTitle,
     });
 
-    await this.client.sendResourceToServer({
+    await this.responseSender.sendResourceToServer({
       resource: "new-tab-group",
       correlationId,
       groupId: tabGroup.id,

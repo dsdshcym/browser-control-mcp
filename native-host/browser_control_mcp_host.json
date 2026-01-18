@@ -1,0 +1,9 @@
+{
+  "name": "browser_control_mcp_host",
+  "description": "Native messaging host for Browser Control MCP extension",
+  "path": "/path/to/browser-control-mcp-host",
+  "type": "stdio",
+  "allowed_extensions": [
+    "browser-control-mcp@anthropic.com"
+  ]
+}

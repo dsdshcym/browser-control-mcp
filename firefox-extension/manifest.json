@@ -13,7 +13,8 @@
         "tabs",
         "tabGroups",
         "history",
-        "storage"
+        "storage",
+        "nativeMessaging"
     ],
     "optional_permissions": [
         "*://*/*",

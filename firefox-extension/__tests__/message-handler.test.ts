@@ -1,34 +1,23 @@
-import { MessageHandler } from "../message-handler";
-import { WebsocketClient } from "../client";
-import type { ServerMessageRequest } from "@browser-control-mcp/common";
+import { MessageHandler, ResponseSender } from "../message-handler";
+import type { ServerMessageRequest, ExtensionMessage } from "@browser-control-mcp/common";
 import { ExtensionConfig } from "../extension-config";
-
-// Mock the WebsocketClient
-jest.mock("../client", () => {
-  return {
-    WebsocketClient: jest.fn().mockImplementation(() => {
-      return {
-        sendResourceToServer: jest.fn().mockResolvedValue(undefined),
-        sendErrorToServer: jest.fn().mockResolvedValue(undefined),
-      };
-    }),
-  };
-});
 
 describe("MessageHandler", () => {
   let messageHandler: MessageHandler;
-  let mockClient: jest.Mocked<WebsocketClient>;
+  let mockResponseSender: jest.Mocked<ResponseSender>;
 
   beforeEach(() => {
     // Clear all mocks before each test
     jest.clearAllMocks();
 
-    // Create a new instance of WebsocketClient and MessageHandler
-    mockClient = new WebsocketClient(
-      8080,
-      "test-secret"
-    ) as jest.Mocked<WebsocketClient>;
-    messageHandler = new MessageHandler(mockClient);
+    // Create a mock ResponseSender
+    mockResponseSender = {
+      sendResourceToServer: jest.fn().mockResolvedValue(undefined),
+      sendErrorToServer: jest.fn().mockResolvedValue(undefined),
+    };
+
+    // Create a new instance of MessageHandler with the mock sender
+    messageHandler = new MessageHandler(mockResponseSender);
 
     // Mock browser.storage.local.get to return default config
     const defaultConfig: ExtensionConfig = {
@@ -106,7 +95,7 @@ describe("MessageHandler", () => {
         expect(browser.tabs.create).toHaveBeenCalledWith({
           url: "https://example.com",
         });
-        expect(mockClient.sendResourceToServer).toHaveBeenCalledWith({
+        expect(mockResponseSender.sendResourceToServer).toHaveBeenCalledWith({
           resource: "opened-tab-id",
           correlationId: "test-correlation-id",
           tabId: 123,
@@ -199,7 +188,7 @@ describe("MessageHandler", () => {
         expect(browser.tabs.create).toHaveBeenCalledWith({
           url: "https://allowed.com",
         });
-        expect(mockClient.sendResourceToServer).toHaveBeenCalledWith({
+        expect(mockResponseSender.sendResourceToServer).toHaveBeenCalledWith({
           resource: "opened-tab-id",
           correlationId: "test-correlation-id",
           tabId: 123,
@@ -223,7 +212,7 @@ describe("MessageHandler", () => {
 
         // Assert
         expect(browser.tabs.remove).toHaveBeenCalledWith([123, 456]);
-        expect(mockClient.sendResourceToServer).toHaveBeenCalledWith({
+        expect(mockResponseSender.sendResourceToServer).toHaveBeenCalledWith({
           resource: "tabs-closed",
           correlationId: "test-correlation-id",
         });
@@ -246,7 +235,7 @@ describe("MessageHandler", () => {
 
         // Assert
         expect(browser.tabs.query).toHaveBeenCalledWith({});
-        expect(mockClient.sendResourceToServer).toHaveBeenCalledWith({
+        expect(mockResponseSender.sendResourceToServer).toHaveBeenCalledWith({
           resource: "tabs",
           correlationId: "test-correlation-id",
           tabs: mockTabs,
@@ -273,7 +262,7 @@ describe("MessageHandler", () => {
           active: true,
           currentWindow: true,
         });
-        expect(mockClient.sendResourceToServer).toHaveBeenCalledWith({
+        expect(mockResponseSender.sendResourceToServer).toHaveBeenCalledWith({
           resource: "current-tab",
           correlationId: "test-correlation-id",
           tab: mockTab,
@@ -307,7 +296,7 @@ describe("MessageHandler", () => {
           maxResults: 200,
           startTime: 0,
         });
-        expect(mockClient.sendResourceToServer).toHaveBeenCalledWith({
+        expect(mockResponseSender.sendResourceToServer).toHaveBeenCalledWith({
           resource: "history",
           correlationId: "test-correlation-id",
           historyItems: mockHistoryItems,
@@ -358,7 +347,7 @@ describe("MessageHandler", () => {
         await messageHandler.handleDecodedMessage(request);
 
         // Assert
-        expect(mockClient.sendResourceToServer).toHaveBeenCalledWith({
+        expect(mockResponseSender.sendResourceToServer).toHaveBeenCalledWith({
           resource: "history",
           correlationId: "test-correlation-id",
           historyItems: [{ url: "https://example.com", title: "Example" }],
@@ -400,7 +389,7 @@ describe("MessageHandler", () => {
           origins: ["https://example.com/*"],
         });
         expect(browser.tabs.executeScript).toHaveBeenCalled();
-        expect(mockClient.sendResourceToServer).toHaveBeenCalledWith({
+        expect(mockResponseSender.sendResourceToServer).toHaveBeenCalledWith({
           resource: "tab-content",
           tabId: 123,
           correlationId: "test-correlation-id",
@@ -487,7 +476,7 @@ describe("MessageHandler", () => {
         expect(browser.tabs.move).toHaveBeenNthCalledWith(1, 123, { index: 0 });
         expect(browser.tabs.move).toHaveBeenNthCalledWith(2, 456, { index: 1 });
         expect(browser.tabs.move).toHaveBeenNthCalledWith(3, 789, { index: 2 });
-        expect(mockClient.sendResourceToServer).toHaveBeenCalledWith({
+        expect(mockResponseSender.sendResourceToServer).toHaveBeenCalledWith({
           resource: "tabs-reordered",
           correlationId: "test-correlation-id",
           tabOrder: [123, 456, 789],
@@ -522,7 +511,7 @@ describe("MessageHandler", () => {
         expect(browser.find.highlightResults).toHaveBeenCalledWith({
           tabId: 123,
         });
-        expect(mockClient.sendResourceToServer).toHaveBeenCalledWith({
+        expect(mockResponseSender.sendResourceToServer).toHaveBeenCalledWith({
           resource: "find-highlight-result",
           correlationId: "test-correlation-id",
           noOfResults: 5,
@@ -550,7 +539,7 @@ describe("MessageHandler", () => {
         // Assert
         expect(browser.tabs.update).not.toHaveBeenCalled();
         expect(browser.find.highlightResults).not.toHaveBeenCalled();
-        expect(mockClient.sendResourceToServer).toHaveBeenCalledWith({
+        expect(mockResponseSender.sendResourceToServer).toHaveBeenCalledWith({
           resource: "find-highlight-result",
           correlationId: "test-correlation-id",
           noOfResults: 0,
