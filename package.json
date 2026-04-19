@@ -4,7 +4,8 @@
   "private": true,
   "workspaces": [
     "common",
-    "extension"
+    "extension",
+    "native-host"
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present"
