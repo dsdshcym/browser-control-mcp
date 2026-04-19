@@ -1,15 +1,24 @@
-import { emitError } from "./output";
+import { emitError, emitSuccess } from "./output";
+import { CliError } from "./client";
+import { listTabs } from "./commands/list-tabs";
 
 const USAGE = `Usage: browser-control-cli <command> [args]
 
-Commands will be added as verbs are implemented.
+Commands:
+  list-tabs             list all open tabs as JSON
 
 General:
-  --help, -h    show this help
-  --version     show version
+  --help, -h            show this help
+  --version             show version
 `;
 
-function main(argv: string[]): void {
+type Handler = (args: string[]) => Promise<unknown>;
+
+const commands: Record<string, Handler> = {
+  "list-tabs": listTabs,
+};
+
+async function main(argv: string[]): Promise<void> {
   const [sub, ...rest] = argv;
 
   if (!sub || sub === "--help" || sub === "-h") {
@@ -22,7 +31,20 @@ function main(argv: string[]): void {
     process.exit(0);
   }
 
-  emitError(`unknown command: ${sub}`);
+  const handler = commands[sub];
+  if (!handler) {
+    emitError(`unknown command: ${sub}`);
+  }
+
+  try {
+    const result = await handler(rest);
+    emitSuccess(result);
+  } catch (err) {
+    if (err instanceof CliError) {
+      emitError(err.message, err.hint);
+    }
+    emitError((err as Error).message ?? String(err));
+  }
 }
 
 main(process.argv.slice(2));
