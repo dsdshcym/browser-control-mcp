@@ -424,32 +424,5 @@ describe("MessageHandler", () => {
       });
     });
 
-    describe("reorder-tabs command", () => {
-      it("should reorder tabs and send confirmation to the server", async () => {
-        // Arrange
-        const request: ServerMessageRequest = {
-          cmd: "reorder-tabs",
-          tabOrder: [123, 456, 789],
-          correlationId: "test-correlation-id",
-        };
-
-        (browser.tabs.move as jest.Mock).mockResolvedValue(undefined);
-
-        // Act
-        await messageHandler.handleDecodedMessage(request);
-
-        // Assert
-        expect(browser.tabs.move).toHaveBeenCalledTimes(3);
-        expect(browser.tabs.move).toHaveBeenNthCalledWith(1, 123, { index: 0 });
-        expect(browser.tabs.move).toHaveBeenNthCalledWith(2, 456, { index: 1 });
-        expect(browser.tabs.move).toHaveBeenNthCalledWith(3, 789, { index: 2 });
-        expect(mockClient.sendResourceToServer).toHaveBeenCalledWith({
-          resource: "tabs-reordered",
-          correlationId: "test-correlation-id",
-          tabOrder: [123, 456, 789],
-        });
-      });
-    });
-
   });
 });

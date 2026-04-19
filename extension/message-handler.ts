@@ -39,9 +39,6 @@ export class MessageHandler {
       case "get-tab-content":
         await this.sendTabsContent(req.correlationId, req.tabId, req.offset);
         break;
-      case "reorder-tabs":
-        await this.reorderTabs(req.correlationId, req.tabOrder);
-        break;
       default:
         const _exhaustiveCheck: never = req;
         console.error("Invalid message received:", req);
@@ -215,22 +212,6 @@ export class MessageHandler {
       fullText,
       links,
       totalLength,
-    });
-  }
-
-  private async reorderTabs(
-    correlationId: string,
-    tabOrder: number[]
-  ): Promise<void> {
-    // Reorder the tabs sequentially
-    for (let newIndex = 0; newIndex < tabOrder.length; newIndex++) {
-      const tabId = tabOrder[newIndex];
-      await browser.tabs.move(tabId, { index: newIndex });
-    }
-    await this.client.sendResourceToServer({
-      resource: "tabs-reordered",
-      correlationId,
-      tabOrder,
     });
   }
 

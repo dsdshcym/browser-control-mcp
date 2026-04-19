@@ -41,11 +41,6 @@ export interface BrowserHistoryExtensionMessage extends ExtensionMessageBase {
   historyItems: BrowserHistoryItem[];
 }
 
-export interface ReorderedTabsExtensionMessage extends ExtensionMessageBase {
-  resource: "tabs-reordered";
-  tabOrder: number[];
-}
-
 export interface TabsClosedExtensionMessage extends ExtensionMessageBase {
   resource: "tabs-closed";
 }
@@ -55,7 +50,6 @@ export type ExtensionMessage =
   | TabsExtensionMessage
   | OpenedTabIdExtensionMessage
   | BrowserHistoryExtensionMessage
-  | ReorderedTabsExtensionMessage
   | TabsClosedExtensionMessage;
 
 export interface ExtensionError {

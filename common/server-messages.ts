@@ -27,17 +27,11 @@ export interface GetTabContentServerMessage extends ServerMessageBase {
   offset?: number;
 }
 
-export interface ReorderTabsServerMessage extends ServerMessageBase {
-  cmd: "reorder-tabs";
-  tabOrder: number[];
-}
-
 export type ServerMessage =
   | OpenTabServerMessage
   | CloseTabsServerMessage
   | GetTabListServerMessage
   | GetBrowserRecentHistoryServerMessage
-  | GetTabContentServerMessage
-  | ReorderTabsServerMessage;
+  | GetTabContentServerMessage;
 
 export type ServerMessageRequest = ServerMessage & { correlationId: string };

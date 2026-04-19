@@ -1,5 +1,5 @@
 /**
- * Configuration management for Browser Control MCP extension
+ * Configuration management for Browser Control CLI extension
  */
 
 import { ServerMessageRequest } from "@browser-control-mcp/common/server-messages";
@@ -40,11 +40,6 @@ export const AVAILABLE_TOOLS: ToolInfo[] = [
     name: "Get Tab Web Content",
     description: "Allows the MCP server to read the content of web pages"
   },
-  {
-    id: "reorder-browser-tabs",
-    name: "Reorder/Group Browser Tabs",
-    description: "Allows the MCP server to reorder/group your browser tabs"
-  }
 ];
 
 // Map command names to tool IDs
@@ -54,7 +49,6 @@ export const COMMAND_TO_TOOL_ID: Record<ServerMessageRequest["cmd"], string> = {
   "get-tab-list": "get-list-of-open-tabs",
   "get-browser-recent-history": "get-recent-browser-history",
   "get-tab-content": "get-tab-web-content",
-  "reorder-tabs": "reorder-browser-tabs",
 };
 
 // Storage schema for tool settings

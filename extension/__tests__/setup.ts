@@ -8,7 +8,6 @@ const mockBrowser = {
     query: jest.fn(),
     get: jest.fn(),
     executeScript: jest.fn(),
-    move: jest.fn(),
     update: jest.fn(),
   },
   history: {
