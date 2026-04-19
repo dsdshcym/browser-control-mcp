@@ -1,12 +1,10 @@
 import { getConfig } from "./extension-config";
+import { startNativeBridge } from "./native-bridge";
 
-// TODO(phase 4.1): wire MessageHandler to browser.runtime.connectNative once
-// the native-host UDS bridge lands.
-
-async function initExtension() {
-  const config = await getConfig();
-  console.log("Browser extension initialized (no transport wired yet)");
-  return config;
+async function initExtension(): Promise<void> {
+  await getConfig();
+  startNativeBridge();
+  console.log("Browser Control CLI extension initialized");
 }
 
 initExtension().catch((error) => {
