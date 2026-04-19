@@ -46,11 +46,6 @@ export interface ReorderedTabsExtensionMessage extends ExtensionMessageBase {
   tabOrder: number[];
 }
 
-export interface FindHighlightExtensionMessage extends ExtensionMessageBase {
-  resource: "find-highlight-result";
-  noOfResults: number;
-}
-
 export interface TabsClosedExtensionMessage extends ExtensionMessageBase {
   resource: "tabs-closed";
 }
@@ -66,7 +61,6 @@ export type ExtensionMessage =
   | OpenedTabIdExtensionMessage
   | BrowserHistoryExtensionMessage
   | ReorderedTabsExtensionMessage
-  | FindHighlightExtensionMessage
   | TabsClosedExtensionMessage
   | TabGroupCreatedExtensionMessage;
 

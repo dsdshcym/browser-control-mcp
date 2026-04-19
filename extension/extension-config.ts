@@ -44,11 +44,6 @@ export const AVAILABLE_TOOLS: ToolInfo[] = [
     id: "reorder-browser-tabs",
     name: "Reorder/Group Browser Tabs",
     description: "Allows the MCP server to reorder/group your browser tabs"
-  },
-  {
-    id: "find-highlight-in-browser-tab",
-    name: "Find and Highlight in Browser Tab",
-    description: "Allows the MCP server to search for and highlight text in web pages"
   }
 ];
 
@@ -60,7 +55,6 @@ export const COMMAND_TO_TOOL_ID: Record<ServerMessageRequest["cmd"], string> = {
   "get-browser-recent-history": "get-recent-browser-history",
   "get-tab-content": "get-tab-web-content",
   "reorder-tabs": "reorder-browser-tabs",
-  "find-highlight": "find-highlight-in-browser-tab",
   "group-tabs": "reorder-browser-tabs",
 };
 

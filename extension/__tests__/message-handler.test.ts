@@ -25,7 +25,6 @@ describe("MessageHandler", () => {
         "get-recent-browser-history": true,
         "get-tab-web-content": true,
         "reorder-browser-tabs": true,
-        "find-highlight-in-browser-tab": true,
       },
       domainDenyList: [],
       ports: [8089],
@@ -452,87 +451,5 @@ describe("MessageHandler", () => {
       });
     });
 
-    describe("find-highlight command", () => {
-      it("should find and highlight text in a tab", async () => {
-        // Arrange
-        const request: ServerMessageRequest = {
-          cmd: "find-highlight",
-          tabId: 123,
-          queryPhrase: "test",
-          correlationId: "test-correlation-id",
-        };
-
-        const mockFindResults = { count: 5 };
-        (browser.find.find as jest.Mock).mockResolvedValue(mockFindResults);
-        (browser.tabs.update as jest.Mock).mockResolvedValue(undefined);
-        (browser.permissions.contains as jest.Mock).mockResolvedValue(true);
-
-        // Act
-        await messageHandler.handleDecodedMessage(request);
-
-        // Assert
-        expect(browser.find.find).toHaveBeenCalledWith("test", {
-          tabId: 123,
-          caseSensitive: true,
-        });
-        expect(browser.tabs.update).toHaveBeenCalledWith(123, { active: true });
-        expect(browser.find.highlightResults).toHaveBeenCalledWith({
-          tabId: 123,
-        });
-        expect(mockClient.sendResourceToServer).toHaveBeenCalledWith({
-          resource: "find-highlight-result",
-          correlationId: "test-correlation-id",
-          noOfResults: 5,
-        });
-      });
-
-      it("should not highlight or activate tab if no results found", async () => {
-        // Arrange
-        const request: ServerMessageRequest = {
-          cmd: "find-highlight",
-          tabId: 123,
-          queryPhrase: "test",
-          correlationId: "test-correlation-id",
-        };
-
-        const mockFindResults = { count: 0 };
-        const mockTab = { id: 123, url: "https://example.com" };
-        (browser.tabs.get as jest.Mock).mockResolvedValue(mockTab);
-        (browser.find.find as jest.Mock).mockResolvedValue(mockFindResults);
-        (browser.permissions.contains as jest.Mock).mockResolvedValue(true);
-
-        // Act
-        await messageHandler.handleDecodedMessage(request);
-
-        // Assert
-        expect(browser.tabs.update).not.toHaveBeenCalled();
-        expect(browser.find.highlightResults).not.toHaveBeenCalled();
-        expect(mockClient.sendResourceToServer).toHaveBeenCalledWith({
-          resource: "find-highlight-result",
-          correlationId: "test-correlation-id",
-          noOfResults: 0,
-        });
-      });
-
-      it("should throw an error if permissions are denied", async () => {
-        // Arrange
-        const request: ServerMessageRequest = {
-          cmd: "find-highlight",
-          tabId: 123,
-          queryPhrase: "test",
-          correlationId: "test-correlation-id",
-        };
-
-        const mockTab = { id: 123, url: "https://example.com" };
-        (browser.tabs.get as jest.Mock).mockResolvedValue(mockTab);
-        (browser.permissions.contains as jest.Mock).mockResolvedValue(false);
-
-        // Act & Assert
-        await expect(
-          messageHandler.handleDecodedMessage(request)
-        ).rejects.toThrow();
-        expect(browser.find.find).not.toHaveBeenCalled();
-      });
-    });
   });
 });

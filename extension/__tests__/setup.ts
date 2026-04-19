@@ -18,10 +18,6 @@ const mockBrowser = {
   history: {
     search: jest.fn(),
   },
-  find: {
-    find: jest.fn(),
-    highlightResults: jest.fn(),
-  },
   storage: {
     local: {
         get: jest.fn(),

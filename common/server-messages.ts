@@ -32,12 +32,6 @@ export interface ReorderTabsServerMessage extends ServerMessageBase {
   tabOrder: number[];
 }
 
-export interface FindHighlightServerMessage extends ServerMessageBase {
-  cmd: "find-highlight";
-  tabId: number;
-  queryPhrase: string;
-}
-
 export interface GroupTabsServerMessage extends ServerMessageBase {
   cmd: "group-tabs";
   tabIds: number[];
@@ -53,7 +47,6 @@ export type ServerMessage =
   | GetBrowserRecentHistoryServerMessage
   | GetTabContentServerMessage
   | ReorderTabsServerMessage
-  | FindHighlightServerMessage
   | GroupTabsServerMessage;
 
 export type ServerMessageRequest = ServerMessage & { correlationId: string };

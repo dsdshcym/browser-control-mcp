@@ -42,13 +42,6 @@ export class MessageHandler {
       case "reorder-tabs":
         await this.reorderTabs(req.correlationId, req.tabOrder);
         break;
-      case "find-highlight":
-        await this.findAndHighlightText(
-          req.correlationId,
-          req.tabId,
-          req.queryPhrase
-        );
-        break;
       case "group-tabs":
         await this.groupTabs(
           req.correlationId,
@@ -175,27 +168,6 @@ export class MessageHandler {
     }
   }
 
-  private async checkForGlobalPermission(permissions: string[]): Promise<void> {
-    const granted = await browser.permissions.contains({
-      permissions,
-    });
-
-    if (!granted) {
-      // Open the options page with a URL parameter to request permission:
-      const optionsUrl = browser.runtime.getURL("options.html");
-      const urlWithParams = `${optionsUrl}?requestPermissions=${encodeURIComponent(
-        JSON.stringify(permissions)
-      )}`;
-
-      await browser.tabs.create({ url: urlWithParams });
-      throw new Error(
-        `The user has not yet granted permission for the following operations: ${permissions.join(
-          ", "
-        )}. A dialog is now being opened to request permission. If the user grants permission, you can try the request again.`
-      );
-    }
-  }
-
   private async sendTabsContent(
     correlationId: string,
     tabId: number,
@@ -268,41 +240,6 @@ export class MessageHandler {
       resource: "tabs-reordered",
       correlationId,
       tabOrder,
-    });
-  }
-
-  private async findAndHighlightText(
-    correlationId: string,
-    tabId: number,
-    queryPhrase: string
-  ): Promise<void> {
-    const tab = await browser.tabs.get(tabId);
-
-    if (tab.url && (await isDomainInDenyList(tab.url))) {
-      throw new Error(`Domain in tab URL is in the deny list`);
-    }
-
-    await this.checkForGlobalPermission(["find"]);
-
-    const findResults = await browser.find.find(queryPhrase, {
-      tabId,
-      caseSensitive: true,
-    });
-
-    // If there are results, highlight them
-    if (findResults.count > 0) {
-      // But first, activate the tab. In firefox, this would also enable
-      // auto-scrolling to the highlighted result.
-      await browser.tabs.update(tabId, { active: true });
-      browser.find.highlightResults({
-        tabId,
-      });
-    }
-
-    await this.client.sendResourceToServer({
-      resource: "find-highlight-result",
-      correlationId,
-      noOfResults: findResults.count,
     });
   }
 
