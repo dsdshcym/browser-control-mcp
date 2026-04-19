@@ -1,0 +1,21 @@
+{
+  "name": "browser-control-cli",
+  "version": "1.5.0",
+  "private": true,
+  "bin": {
+    "browser-control-cli": "dist/main.js"
+  },
+  "scripts": {
+    "build": "esbuild src/main.ts --bundle --platform=node --target=node18 --outfile=dist/main.js --banner:js='#!/usr/bin/env node' && chmod +x dist/main.js",
+    "test": "node --test --import tsx 'src/__tests__/**/*.test.ts'"
+  },
+  "dependencies": {
+    "@browser-control-mcp/common": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "esbuild": "0.25.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.8.2"
+  }
+}

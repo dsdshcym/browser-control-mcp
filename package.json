@@ -5,7 +5,8 @@
   "workspaces": [
     "common",
     "extension",
-    "native-host"
+    "native-host",
+    "cli"
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present"
