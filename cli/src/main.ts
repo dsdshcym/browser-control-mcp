@@ -5,6 +5,7 @@ import { currentTab } from "./commands/current-tab";
 import { openTab } from "./commands/open-tab";
 import { closeTabs } from "./commands/close-tabs";
 import { getContent } from "./commands/get-content";
+import { historySearch } from "./commands/history-search";
 
 const USAGE = `Usage: browser-control-cli <command> [args]
 
@@ -15,6 +16,7 @@ Commands:
   close-tabs <id>...    close the given tab ids
   get-content <id>      read a tab's visible text and links (needs origin permission)
                         [--offset N] skip N chars into body text
+  history-search [q]    recent browser history, optionally filtered by query
 
 General:
   --help, -h            show this help
@@ -29,6 +31,7 @@ const commands: Record<string, Handler> = {
   "open-tab": openTab,
   "close-tabs": closeTabs,
   "get-content": getContent,
+  "history-search": historySearch,
 };
 
 async function main(argv: string[]): Promise<void> {
