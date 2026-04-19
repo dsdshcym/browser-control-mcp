@@ -43,11 +43,19 @@ export async function sendRequest(cmd: ServerMessage, opts: SendOptions = {}): P
         reject(new CliError("empty response from native-host"));
         return;
       }
+      let parsed: unknown;
       try {
-        resolve(JSON.parse(line));
+        parsed = JSON.parse(line);
       } catch (err) {
         reject(new CliError(`failed to parse response: ${(err as Error).message}`));
+        return;
       }
+      const errorMessage = (parsed as { error?: string }).error;
+      if (typeof errorMessage === "string") {
+        reject(new CliError(errorMessage));
+        return;
+      }
+      resolve(parsed);
     });
     sock.on("error", (err) => {
       clearTimeout(timeout);

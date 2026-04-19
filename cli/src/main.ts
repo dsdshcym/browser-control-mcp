@@ -63,8 +63,9 @@ async function main(argv: string[]): Promise<void> {
   } catch (err) {
     if (err instanceof CliError) {
       emitError(err.message, err.hint);
+    } else {
+      emitError((err as Error).message ?? String(err));
     }
-    emitError((err as Error).message ?? String(err));
   }
 }
 

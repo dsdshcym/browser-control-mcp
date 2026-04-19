@@ -48,3 +48,28 @@ test("client: throws CliError with a hint if socket does not exist", async () =>
     (err) => err instanceof CliError && /socket not found/.test(err.message) && !!err.hint,
   );
 });
+
+test("client: rejects when server reply carries an error field", async () => {
+  const socketPath = tempSocketPath();
+  const server = net.createServer((sock) => {
+    let buf = "";
+    sock.on("data", (c: Buffer) => {
+      buf += c.toString("utf-8");
+      const nl = buf.indexOf("\n");
+      if (nl < 0) return;
+      const req = JSON.parse(buf.slice(0, nl));
+      sock.write(JSON.stringify({ correlationId: req.correlationId, error: "permission denied" }) + "\n");
+      sock.end();
+    });
+  });
+  await new Promise<void>((r) => server.listen(socketPath, () => r()));
+  try {
+    await assert.rejects(
+      sendRequest({ cmd: "get-tab-list" }, { socketPath }),
+      (err) => err instanceof CliError && /permission denied/.test(err.message),
+    );
+  } finally {
+    await new Promise<void>((r) => server.close(() => r()));
+    if (fs.existsSync(socketPath)) fs.unlinkSync(socketPath);
+  }
+});
