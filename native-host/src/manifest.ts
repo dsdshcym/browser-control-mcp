@@ -5,7 +5,7 @@ import * as path from "path";
 export const HOST_NAME = "browser_control_cli_host";
 
 // Extension ID declared in extension/manifest.json (browser_specific_settings.gecko.id).
-export const DEFAULT_ALLOWED_EXTENSION_IDS = ["browser-control-mcp@anthropic.com"];
+export const DEFAULT_ALLOWED_EXTENSION_IDS = ["browser-control-cli@anthropic.com"];
 
 export interface ManifestPaths {
   dir: string;
