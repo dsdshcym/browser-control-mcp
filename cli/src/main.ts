@@ -6,6 +6,7 @@ import { openTab } from "./commands/open-tab";
 import { closeTabs } from "./commands/close-tabs";
 import { getContent } from "./commands/get-content";
 import { historySearch } from "./commands/history-search";
+import { installHost } from "./commands/install-host";
 
 const USAGE = `Usage: browser-control-cli <command> [args]
 
@@ -17,6 +18,9 @@ Commands:
   get-content <id>      read a tab's visible text and links (needs origin permission)
                         [--offset N] skip N chars into body text
   history-search [q]    recent browser history, optionally filtered by query
+
+Setup:
+  install-host          install the Firefox native-messaging manifest for this user
 
 General:
   --help, -h            show this help
@@ -32,6 +36,7 @@ const commands: Record<string, Handler> = {
   "close-tabs": closeTabs,
   "get-content": getContent,
   "history-search": historySearch,
+  "install-host": installHost,
 };
 
 async function main(argv: string[]): Promise<void> {
