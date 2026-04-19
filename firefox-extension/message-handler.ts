@@ -1,11 +1,15 @@
-import type { ServerMessageRequest } from "@browser-control-mcp/common";
-import { WebsocketClient } from "./client";
+import type { ServerMessageRequest, ExtensionMessage } from "@browser-control-mcp/common";
 import { isCommandAllowed, isDomainInDenyList, COMMAND_TO_TOOL_ID, addAuditLogEntry } from "./extension-config";
 
-export class MessageHandler {
-  private client: WebsocketClient;
+export interface ResponseSender {
+  sendResourceToServer(resource: ExtensionMessage): Promise<void>;
+  sendErrorToServer(correlationId: string, errorMessage: string): Promise<void>;
+}
 
-  constructor(client: WebsocketClient) {
+export class MessageHandler {
+  private client: ResponseSender;
+
+  constructor(client: ResponseSender) {
     this.client = client;
   }
 

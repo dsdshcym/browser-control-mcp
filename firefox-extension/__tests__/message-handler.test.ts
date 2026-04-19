@@ -1,33 +1,18 @@
-import { MessageHandler } from "../message-handler";
-import { WebsocketClient } from "../client";
+import { MessageHandler, ResponseSender } from "../message-handler";
 import type { ServerMessageRequest } from "@browser-control-mcp/common";
 import { ExtensionConfig } from "../extension-config";
 
-// Mock the WebsocketClient
-jest.mock("../client", () => {
-  return {
-    WebsocketClient: jest.fn().mockImplementation(() => {
-      return {
-        sendResourceToServer: jest.fn().mockResolvedValue(undefined),
-        sendErrorToServer: jest.fn().mockResolvedValue(undefined),
-      };
-    }),
-  };
-});
-
 describe("MessageHandler", () => {
   let messageHandler: MessageHandler;
-  let mockClient: jest.Mocked<WebsocketClient>;
+  let mockClient: jest.Mocked<ResponseSender>;
 
   beforeEach(() => {
-    // Clear all mocks before each test
     jest.clearAllMocks();
 
-    // Create a new instance of WebsocketClient and MessageHandler
-    mockClient = new WebsocketClient(
-      8080,
-      "test-secret"
-    ) as jest.Mocked<WebsocketClient>;
+    mockClient = {
+      sendResourceToServer: jest.fn().mockResolvedValue(undefined),
+      sendErrorToServer: jest.fn().mockResolvedValue(undefined),
+    };
     messageHandler = new MessageHandler(mockClient);
 
     // Mock browser.storage.local.get to return default config
