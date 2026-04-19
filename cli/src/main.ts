@@ -4,6 +4,7 @@ import { listTabs } from "./commands/list-tabs";
 import { currentTab } from "./commands/current-tab";
 import { openTab } from "./commands/open-tab";
 import { closeTabs } from "./commands/close-tabs";
+import { getContent } from "./commands/get-content";
 
 const USAGE = `Usage: browser-control-cli <command> [args]
 
@@ -12,6 +13,8 @@ Commands:
   current-tab           get the active tab in the focused window
   open-tab <url>        open a new tab at the given https:// URL
   close-tabs <id>...    close the given tab ids
+  get-content <id>      read a tab's visible text and links (needs origin permission)
+                        [--offset N] skip N chars into body text
 
 General:
   --help, -h            show this help
@@ -25,6 +28,7 @@ const commands: Record<string, Handler> = {
   "current-tab": currentTab,
   "open-tab": openTab,
   "close-tabs": closeTabs,
+  "get-content": getContent,
 };
 
 async function main(argv: string[]): Promise<void> {
