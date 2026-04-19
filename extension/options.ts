@@ -12,7 +12,13 @@ import {
   getToolNameById,
 } from "./extension-config";
 
+const ALL_SITES_ORIGINS = ["*://*/*"];
+
 const toolSettingsContainer = document.getElementById("tool-settings-container") as HTMLDivElement;
+const grantAllSitesButton = document.getElementById("grant-all-sites") as HTMLButtonElement | null;
+const revokeAllSitesButton = document.getElementById("revoke-all-sites") as HTMLButtonElement | null;
+const allSitesStatusElement = document.getElementById("all-sites-status") as HTMLParagraphElement | null;
+const allSitesFeedbackElement = document.getElementById("all-sites-feedback") as HTMLDivElement | null;
 const domainDenyListTextarea = document.getElementById("domain-deny-list") as HTMLTextAreaElement;
 const saveDomainListsButton = document.getElementById("save-domain-lists") as HTMLButtonElement;
 const domainStatusElement = document.getElementById("domain-status") as HTMLDivElement;
@@ -222,13 +228,72 @@ function hidePermissionModal(): void {
   mainContent.classList.remove("modal-open");
 }
 
+async function refreshAllSitesStatus(): Promise<void> {
+  if (!allSitesStatusElement) return;
+  try {
+    const granted = await browser.permissions.contains({ origins: ALL_SITES_ORIGINS });
+    if (granted) {
+      allSitesStatusElement.textContent = "All-sites access is currently granted.";
+      allSitesStatusElement.style.color = "#2e7d32";
+    } else {
+      allSitesStatusElement.textContent = "All-sites access is not granted — per-domain prompts will appear.";
+      allSitesStatusElement.style.color = "#666";
+    }
+  } catch (error) {
+    console.error("Error checking all-sites permission:", error);
+  }
+}
+
+function flashAllSitesFeedback(message: string, color: string): void {
+  if (!allSitesFeedbackElement) return;
+  allSitesFeedbackElement.textContent = message;
+  allSitesFeedbackElement.style.color = color;
+  setTimeout(() => {
+    allSitesFeedbackElement.textContent = "";
+    allSitesFeedbackElement.style.color = "";
+  }, 3000);
+}
+
+async function handleGrantAllSites(event: MouseEvent): Promise<void> {
+  if (!event.isTrusted) return;
+  try {
+    const granted = await browser.permissions.request({ origins: ALL_SITES_ORIGINS });
+    flashAllSitesFeedback(
+      granted ? "All-sites access granted." : "Permission request declined.",
+      granted ? "#2e7d32" : "#c62828",
+    );
+    await refreshAllSitesStatus();
+  } catch (error) {
+    console.error("Error requesting all-sites permission:", error);
+    flashAllSitesFeedback("Failed to request permission. Check the console.", "#c62828");
+  }
+}
+
+async function handleRevokeAllSites(event: MouseEvent): Promise<void> {
+  if (!event.isTrusted) return;
+  try {
+    const removed = await browser.permissions.remove({ origins: ALL_SITES_ORIGINS });
+    flashAllSitesFeedback(
+      removed ? "All-sites access revoked." : "Nothing to revoke.",
+      removed ? "#2e7d32" : "#666",
+    );
+    await refreshAllSitesStatus();
+  } catch (error) {
+    console.error("Error revoking all-sites permission:", error);
+    flashAllSitesFeedback("Failed to revoke permission. Check the console.", "#c62828");
+  }
+}
+
 saveDomainListsButton.addEventListener("click", saveDomainLists);
 clearAuditLogButton.addEventListener("click", handleClearAuditLog);
+grantAllSitesButton?.addEventListener("click", handleGrantAllSites);
+revokeAllSitesButton?.addEventListener("click", handleRevokeAllSites);
 
 document.addEventListener("DOMContentLoaded", () => {
   createToolSettingsUI();
   loadDomainLists();
   loadAuditLog();
+  refreshAllSitesStatus();
   initializeCollapsibleSections();
 
   const modal = document.getElementById("permission-modal") as HTMLDivElement;

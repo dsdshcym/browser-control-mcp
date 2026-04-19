@@ -351,6 +351,17 @@
     </div>
 
     <div class="section-container">
+      <h2>Website Access</h2>
+      <div class="section-content">
+        <p><code>get-content</code> asks for permission on each new domain the first time. You can grant all-sites access up front here — useful if you plan to let the CLI read arbitrary pages without prompts.</p>
+        <p id="all-sites-status" style="margin: 10px 0; font-size: 14px; color: #666;">Checking current permission...</p>
+        <button id="grant-all-sites" class="copy-button">Grant access to all websites</button>
+        <button id="revoke-all-sites" class="copy-button" style="margin-left: 8px;">Revoke</button>
+        <div class="status" id="all-sites-feedback"></div>
+      </div>
+    </div>
+
+    <div class="section-container">
       <h2>Tool Permissions</h2>
       <div class="section-content">
         <p>Enable or disable specific commands the CLI can issue against your browser:</p>
