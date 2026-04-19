@@ -1,70 +1,81 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code working in this repository.
 
 ## Commands
 
-### Installation
-```bash
-npm install  # Install all dependencies (includes subproject dependencies)
+### Install
+```
+npm install
+```
+Uses npm workspaces; there is no post-install step.
+
+### Build everything
+```
+npm run build
 ```
 
-### Build
-```bash
-npm run build  # Build all projects using nx
+### Per-workspace build or test
+```
+npm --workspace=@browser-control/extension      run build
+npm --workspace=@browser-control/extension      test
+npm --workspace=@browser-control-mcp/native-host run build
+npm --workspace=@browser-control-mcp/native-host test
+npm --workspace=browser-control-cli              run build
+npm --workspace=browser-control-cli              test
 ```
 
-### Individual project builds
-```bash
-# MCP Server
-cd mcp-server && npm run build
-
-# Firefox Extension  
-cd firefox-extension && npm run build
+### Optional: single-binary compile
 ```
-
-### Test
-```bash
-cd firefox-extension && npm test
+npm --workspace=browser-control-cli              run build:binary
+npm --workspace=@browser-control-mcp/native-host run build:binary
 ```
-
-### Start MCP Server
-```bash
-cd mcp-server && npm start
-```
-
-### Package DXT
-```bash
-cd mcp-server && npm run pack-dxt
-```
+Requires Bun. Not needed for day-to-day development.
 
 ## Architecture
 
-This is a monorepo with three main components:
+Four workspaces:
 
-1. **mcp-server**: Node.js MCP server that communicates with Claude Desktop and the browser extension via WebSocket
-2. **firefox-extension**: Firefox browser extension that executes browser actions
-3. **common**: Shared TypeScript interfaces for message passing between server and extension
+1. **common/** — shared TypeScript message types (CLI↔host↔extension wire protocol).
+2. **extension/** — Firefox WebExtension. The only piece with access to `browser.tabs`, `browser.history`, etc. Connects to the native host via `browser.runtime.connectNative("browser_control_cli_host")` and pipes messages straight into `MessageHandler`.
+3. **native-host/** — Node process Firefox spawns. Reads native-messaging frames on stdin/stdout, opens a Unix domain socket, multiplexes concurrent CLI clients by `correlationId`.
+4. **cli/** — one-shot CLI. Each invocation opens the socket, sends one JSON line, reads one JSON line, exits.
 
-### Communication Flow
-- MCP Server ↔ Claude Desktop: MCP protocol over stdio
-- MCP Server ↔ Firefox Extension: WebSocket with authentication via shared secret
-- Extension uses Firefox WebExtensions API for browser control
+### Communication flow
 
-### Key Files
-- `mcp-server/server.ts`: Main MCP server with tool definitions
-- `mcp-server/browser-api.ts`: WebSocket client for extension communication
-- `firefox-extension/background.ts`: Extension background script
-- `firefox-extension/message-handler.ts`: Handles server messages and executes browser actions
-- `common/server-messages.ts`: Messages sent from server to extension
-- `common/extension-messages.ts`: Messages sent from extension to server
+```
+CLI ──UDS──▶ native-host ──native msg──▶ extension ──▶ browser.*
+    ◀────────              ◀────────────
+```
 
-### Authentication
-The extension generates a random secret key that must be configured in the MCP server's environment as `EXTENSION_SECRET`. The server connects to the extension on port 8089 (configurable via `EXTENSION_PORT`).
+### Socket path
 
-### Development Notes
-- Uses esbuild for extension bundling
-- TypeScript throughout with shared interfaces
-- Jest for testing (extension only)
-- Nx for monorepo management
-- Extension requires user consent for accessing webpage content by default
+`$XDG_RUNTIME_DIR/browser-control-cli.sock` if set, else `$TMPDIR/browser-control-cli-<uid>.sock`. Mode `0600`.
+
+### Key files
+
+- `cli/src/main.ts` — entrypoint and subcommand dispatcher
+- `cli/src/client.ts` — UDS client (`sendRequest`)
+- `cli/src/commands/*.ts` — one file per verb
+- `native-host/src/host.ts` — host entrypoint + install/uninstall subcommands
+- `native-host/src/bridge.ts` — UDS accept loop + correlationId routing
+- `native-host/src/manifest.ts` — platform-aware native-messaging manifest paths
+- `extension/background.ts` — boots the native-messaging connection
+- `extension/native-bridge.ts` — wires `port` to `MessageHandler`
+- `extension/message-handler.ts` — case dispatch for each verb
+- `extension/extension-config.ts` — `AVAILABLE_TOOLS`, `COMMAND_TO_TOOL_ID`, audit log, storage
+- `common/protocol.ts` — request/response envelope types
+
+## Conventions
+
+- Auth: filesystem permissions on the socket (`0600` in a per-user directory). No HMAC.
+- JSON output only. `emitSuccess` prints the payload on stdout and exits 0; `emitError` prints `{error, hint?}` on stderr and exits 1.
+- Each CLI verb is a pure function that `return`s the parsed reply; `main.ts` handles printing and exit codes. This keeps verbs easy to unit-test.
+- Tests: Jest for `extension/` (browser-API mocks), `node --test` + `tsx` for `native-host/` and `cli/`.
+- Commits are atomic per operation. Adding/removing a verb is one commit; a shared-scaffolding change lands first.
+
+## Non-goals
+
+- Chromium support (Firefox-only).
+- Windows (macOS and Linux only in v1).
+- MCP server / DXT package (removed in the CLI rewrite).

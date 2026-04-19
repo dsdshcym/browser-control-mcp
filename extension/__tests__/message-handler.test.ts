@@ -17,17 +17,14 @@ describe("MessageHandler", () => {
 
     // Mock browser.storage.local.get to return default config
     const defaultConfig: ExtensionConfig = {
-      secret: "test-secret",
       toolSettings: {
         "open-browser-tab": true,
         "close-browser-tabs": true,
         "get-list-of-open-tabs": true,
         "get-recent-browser-history": true,
         "get-tab-web-content": true,
-        "reorder-browser-tabs": true,
       },
       domainDenyList: [],
-      ports: [8089],
       auditLog: [],
     };
 
@@ -40,18 +37,14 @@ describe("MessageHandler", () => {
     it("should throw an error if command is not allowed", async () => {
       // Arrange
       const configWithDisabledOpenTab: ExtensionConfig = {
-        secret: "test-secret",
         toolSettings: {
           "open-browser-tab": false, // Disable open-tab command
           "close-browser-tabs": true,
           "get-list-of-open-tabs": true,
           "get-recent-browser-history": true,
           "get-tab-web-content": true,
-          "reorder-browser-tabs": true,
-          "find-highlight-in-browser-tab": true,
         },
         domainDenyList: [],
-        ports: [8089],
         auditLog: [],
       };
       (browser.storage.local.get as jest.Mock).mockResolvedValue({
@@ -114,18 +107,14 @@ describe("MessageHandler", () => {
       it("should throw an error if domain is in deny list", async () => {
         // Arrange
         const configWithDenyList: ExtensionConfig = {
-          secret: "test-secret",
           toolSettings: {
             "open-browser-tab": true,
             "close-browser-tabs": true,
             "get-list-of-open-tabs": true,
             "get-recent-browser-history": true,
             "get-tab-web-content": true,
-            "reorder-browser-tabs": true,
-            "find-highlight-in-browser-tab": true,
           },
           domainDenyList: ["example.com", "another.com"],
-          ports: [8089],
           auditLog: [],
         };
         (browser.storage.local.get as jest.Mock).mockResolvedValue({
@@ -148,18 +137,14 @@ describe("MessageHandler", () => {
       it("should open a new tab in the domain is not in the deny list", async () => {
         // Arrange
         const configWithDenyList: ExtensionConfig = {
-          secret: "test-secret",
           toolSettings: {
             "open-browser-tab": true,
             "close-browser-tabs": true,
             "get-list-of-open-tabs": true,
             "get-recent-browser-history": true,
             "get-tab-web-content": true,
-            "reorder-browser-tabs": true,
-            "find-highlight-in-browser-tab": true,
           },
           domainDenyList: ["example.com", "another.com"],
-          ports: [8089],
           auditLog: [],
         };
         (browser.storage.local.get as jest.Mock).mockResolvedValue({
@@ -391,18 +376,14 @@ describe("MessageHandler", () => {
       it("should throw an error if tab URL domain is in deny list", async () => {
         // Arrange
         const configWithDenyList: ExtensionConfig = {
-          secret: "test-secret",
           toolSettings: {
             "open-browser-tab": true,
             "close-browser-tabs": true,
             "get-list-of-open-tabs": true,
             "get-recent-browser-history": true,
             "get-tab-web-content": true,
-            "reorder-browser-tabs": true,
-            "find-highlight-in-browser-tab": true,
           },
           domainDenyList: ["example.com"], // Add example.com to deny list
-          ports: [8089],
           auditLog: [],
         };
         (browser.storage.local.get as jest.Mock).mockResolvedValue({

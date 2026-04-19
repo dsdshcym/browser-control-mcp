@@ -1,35 +1,31 @@
-# Contributing to Browser Control MCP
+# Contributing
 
-We welcome pull requests for adding new features and tools to the extension, as well as for bug fixes.
+We welcome pull requests for bug fixes, docs improvements, and new verbs.
 
-## Development Guidelines
+## Development guidelines
 
-### Testing Requirements
-- Make sure to update the Firefox extension unit tests when making changes
-- Test the MCP server integration with Claude Desktop
-- Test the Firefox extension on Firefox Developer Edition
+### Testing
+- Keep unit tests green: Jest (extension) and `node --test` (native-host, cli).
+- Manually verify any verb end-to-end: load the extension as a Temporary Add-on, run the CLI, confirm the JSON.
 
 ### Compatibility
-- Keep backwards and forward compatibility in mind when making changes
-- Ensure changes work across different versions of Firefox and Claude Desktop
+- Keep the wire protocol in `common/` additive — old extensions should still parse new messages.
+- Firefox minimum version is declared in `extension/manifest.json`.
 
-### Security and Privacy
-Security and privacy are the core design principles of this solution. Please ensure that:
-- All browser interactions require explicit user consent
-- No sensitive data is logged or transmitted unnecessarily  
-- Extension permissions are minimal and justified
-- WebSocket communication uses proper authentication
+### Security and privacy
+- Per-origin content reads require the user's browser-side permission prompt.
+- The socket must remain `0600` and in a per-user directory; no network transport.
+- No telemetry; no runtime third-party deps in the extension.
 
-## Getting Started
+### Commit discipline
+- One operation per commit when adding or removing CLI verbs. Shared scaffolding lands first as its own commit.
+- Follow the existing commit-message style (imperative mood, one-line summary, optional body).
 
-See the main README.md for setup instructions and the CLAUDE.md file for development commands.
+## Pull request process
 
-## Pull Request Process
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes with appropriate tests
-4. Run the test suite: `cd firefox-extension && npm test`
-5. Build all projects: `npm run build`
-6. Test manually with Claude Desktop and Firefox Developer Edition
-7. Submit a pull request with a clear description of changes
+1. Fork the repository.
+2. Create a feature branch from `main`.
+3. Make your changes with tests.
+4. `npm run build && npm --workspaces test`.
+5. Test manually in Firefox.
+6. Submit a PR with a clear description.
