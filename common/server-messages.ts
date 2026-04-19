@@ -27,11 +27,16 @@ export interface GetTabContentServerMessage extends ServerMessageBase {
   offset?: number;
 }
 
+export interface GetCurrentTabServerMessage extends ServerMessageBase {
+  cmd: "get-current-tab";
+}
+
 export type ServerMessage =
   | OpenTabServerMessage
   | CloseTabsServerMessage
   | GetTabListServerMessage
   | GetBrowserRecentHistoryServerMessage
-  | GetTabContentServerMessage;
+  | GetTabContentServerMessage
+  | GetCurrentTabServerMessage;
 
 export type ServerMessageRequest = ServerMessage & { correlationId: string };

@@ -1,11 +1,13 @@
 import { emitError, emitSuccess } from "./output";
 import { CliError } from "./client";
 import { listTabs } from "./commands/list-tabs";
+import { currentTab } from "./commands/current-tab";
 
 const USAGE = `Usage: browser-control-cli <command> [args]
 
 Commands:
   list-tabs             list all open tabs as JSON
+  current-tab           get the active tab in the focused window
 
 General:
   --help, -h            show this help
@@ -16,6 +18,7 @@ type Handler = (args: string[]) => Promise<unknown>;
 
 const commands: Record<string, Handler> = {
   "list-tabs": listTabs,
+  "current-tab": currentTab,
 };
 
 async function main(argv: string[]): Promise<void> {

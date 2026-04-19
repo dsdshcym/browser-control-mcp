@@ -237,6 +237,27 @@ describe("MessageHandler", () => {
       });
     });
 
+    describe("get-current-tab command", () => {
+      it("should get the active tab in the focused window", async () => {
+        const request: ServerMessageRequest = {
+          cmd: "get-current-tab",
+          correlationId: "test-correlation-id",
+        };
+
+        const mockTab = { id: 42, url: "https://example.com", title: "Example" };
+        (browser.tabs.query as jest.Mock).mockResolvedValue([mockTab]);
+
+        await messageHandler.handleDecodedMessage(request);
+
+        expect(browser.tabs.query).toHaveBeenCalledWith({ active: true, currentWindow: true });
+        expect(mockClient.sendResourceToServer).toHaveBeenCalledWith({
+          resource: "current-tab",
+          correlationId: "test-correlation-id",
+          tab: mockTab,
+        });
+      });
+    });
+
     describe("get-browser-recent-history command", () => {
       it("should get history items and send them to the server", async () => {
         // Arrange

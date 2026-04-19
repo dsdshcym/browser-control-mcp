@@ -45,12 +45,18 @@ export interface TabsClosedExtensionMessage extends ExtensionMessageBase {
   resource: "tabs-closed";
 }
 
+export interface CurrentTabExtensionMessage extends ExtensionMessageBase {
+  resource: "current-tab";
+  tab: BrowserTab;
+}
+
 export type ExtensionMessage =
   | TabContentExtensionMessage
   | TabsExtensionMessage
   | OpenedTabIdExtensionMessage
   | BrowserHistoryExtensionMessage
-  | TabsClosedExtensionMessage;
+  | TabsClosedExtensionMessage
+  | CurrentTabExtensionMessage;
 
 export interface ExtensionError {
   correlationId: string;
