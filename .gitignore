@@ -55,3 +55,6 @@ dist
 web-ext-artifacts/
 
 .DS_Store
+
+# Claude Code local settings
+.claude/
