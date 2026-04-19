@@ -1,132 +1,134 @@
-# Browser Control MCP
+# browser-control-cli
 
-[![Firefox Add-on](./.github/addon_badge.svg)](https://addons.mozilla.org/en-US/firefox/addon/browser-control-mcp/)
+A Firefox extension plus a one-shot CLI that lets LLM agents drive your
+browser from a shell. The agent runs commands like `browser-control-cli
+list-tabs`, gets JSON back, and decides what to do next.
 
-An MCP server paired with a Firefox browser extension that provides AI assistants with access to tab management, browsing history, and webpage text content.
+No MCP server. No persistent daemon. The extension and a native-messaging
+host handle everything locally over a Unix domain socket.
 
-## Features
+## What it can do
 
-The MCP server supports the following tools:
-- Open or close tabs
-- Get the list of opened tabs
-- Create tab groups with name and color
-- Reorder opened tabs
-- Read and search the browser's history
-- Read a webpage's text content and links (requires user consent)
-- Find and highlight text in a browser tab (requires user consent)
+| Command                   | Description                                                  |
+|---------------------------|--------------------------------------------------------------|
+| `list-tabs`               | list all open tabs                                           |
+| `current-tab`             | active tab in the focused window                             |
+| `open-tab <url>`          | open a new tab (https only)                                  |
+| `close-tabs <id>...`      | close one or more tabs by id                                 |
+| `get-content <id>`        | read a tab's visible text and links (prompts for origin perm) |
+| `history-search [query]`  | recent browser history, optionally filtered                  |
+| `install-host`            | install the Firefox native-messaging manifest for this user  |
 
-## Example use-cases:
+All commands print one JSON object to stdout on success. Errors go to
+stderr (`{"error": "...", "hint": "..."}`) with a non-zero exit code.
 
-### Tab management
-- *"Close all non-work-related tabs in my browser."*
-- *"Group all development related tabs in my browser into a new group called 'Development'."*
-- *"Rearrange tabs in my browser in an order that makes sense."*
-- *"Close all tabs in my browser that haven't been accessed within the past 24 hours"*
+## Architecture
 
-### Browser history search
-- *"Help me find an article in my browser history about the Milford track in NZ."*
-- *"Open all the articles about AI that I visited during the last week, up to 10 articles, avoid duplications."*
-
-### Browsing and research 
-- *"Open hackernews in my browser, then open the top story, read it, also read the comments. Do the comments agree with the story?"*
-- *"In my browser, use Google Scholar to search for papers about L-theanine in the last 3 years. Open the 3 most cited papers. Read them and summarize them for me."*
-- *"Use Google search in my browser to look for flower shops. Open the 10 most relevant results. Show me a table of each flower shop with location and opening hours."*
-
-## Comparison to web automation MCP servers
-
-The MCP server and Firefox extension combo is designed to be more secure than web automation MCP servers, enabling safer use with the user's personal browser.
-
-* It does not support web page modification, page interactions, or arbitrary scripting.
-* Reading webpage content requires the user's explicit consent in the browser for each domain. This is enforced at the extension's manifest level.
-* It uses a local-only connection with a shared secret between the MCP server and extension.
-* No remote data collection or tracking.
-* It provides an extension-side audit log for tool calls and tool enable/disable configuration.
-* The extension includes no runtime third-party dependencies.
-
-**Important note**: Browser Control MCP is still experimental. Use at your own risk. You should practice caution as with any other MCP server and authorize/monitor tool calls carefully.
-
-## Installation
-
-### Option 1: Install the Firefox and Claude Desktop extensions
-
-The Firefox extension / add-on is [available on addons.mozilla.org](https://addons.mozilla.org/en-US/firefox/addon/browser-control-mcp/). You can also download and open the latest pre-built version from this GitHub repository: [browser-control-mcp-1.5.0.xpi](https://github.com/eyalzh/browser-control-mcp/releases/download/v1.5.0/browser-control-1.5.0.xpi). Complete the installation based on the instructions in the "Manage extension" page, which will open automatically after installation.
-
-The add-on's "Manage extension" page will include a link to the Claude Desktop DXT file. You can also download it here: [mcp-server-v1.5.1.dxt](
-https://github.com/eyalzh/browser-control-mcp/releases/download/v1.5.1/mcp-server-v1.5.1.dxt). After downloading the file, open it or drag it into Claude Desktop's settings window. Make sure to enable the DXT extension after installing it. This will only work with the latest versions of Claude Desktop. If you wish to install the MCP server locally, see the MCP configuration below.
-
-### Option 2: Build from code
-
-To build from code, clone this repository, then run the following commands in the main repository directory to build both the MCP server and the browser extension.
 ```
+┌─────────┐  Unix socket  ┌──────────────┐  native-messaging  ┌───────────┐
+│   CLI   │ ─────────────▶│  native-host │ ◀─────────────────▶│ extension │
+│ one-shot│   JSON/line   │   daemon     │   (4-byte frames)  │ (Firefox) │
+└─────────┘               │  spawned by  │                    └───────────┘
+                          │    Firefox   │
+                          └──────────────┘
+```
+
+- **Extension** is the only piece that can touch Firefox's tab / history
+  APIs. It lives on AMO.
+- **Native host** is a Node process Firefox spawns via the
+  native-messaging protocol. It owns the Unix domain socket and
+  multiplexes many concurrent CLI clients over the one stdio channel to
+  the extension.
+- **CLI** is a tiny shebang script (or optional bun-compiled binary).
+  Each invocation opens the socket, sends one JSON line, reads one JSON
+  line, exits.
+
+Socket path: `$XDG_RUNTIME_DIR/browser-control-cli.sock` if set,
+otherwise `$TMPDIR/browser-control-cli-<uid>.sock`. Permissions are
+`0600` — filesystem permissions replace the old HMAC shared secret.
+
+See `docs/plans/2026-04-19-browser-control-cli-design.md` for the full
+design.
+
+## Install (from source)
+
+```
+git clone https://github.com/eyalzh/browser-control-mcp
+cd browser-control-mcp
 npm install
 npm run build
 ```
 
-#### Installing a Firefox Temporary Add-on 
+Then:
 
-To install the extension on Firefox as a Temporary Add-on:
+1. **Load the extension** in Firefox:
+   - `about:debugging` → "This Firefox" → "Load Temporary Add-on..."
+   - pick `extension/manifest.json`
+2. **Install the native-messaging manifest** so Firefox can spawn the host:
+   ```
+   node native-host/dist/host.js install
+   ```
+   (This drops a `browser_control_cli_host.json` into
+   `~/Library/Application Support/Mozilla/NativeMessagingHosts/` on
+   macOS or `~/.mozilla/native-messaging-hosts/` on Linux.)
+3. **Use the CLI** from anywhere:
+   ```
+   node cli/dist/main.js list-tabs | jq .
+   ```
 
-1. Type `about:debugging` in the Firefox URL bar
-2. Click on "This Firefox"
-3. click on "Load Temporary Add-on..."
-4. Select the `manifest.json` file under the `firefox-extension` folder in this project
-5. The extension's preferences page will open. Copy the secret key to your clipboard. It will be used to configure the MCP server.
+## Install (later, from npm)
 
-Alternatively, to install a permanent add-on, you can install the [Browser Control MCP on addons.mozilla.org](https://addons.mozilla.org/en-US/firefox/addon/browser-control-mcp/) and then configure the MCP Server as detailed below.
+Once published:
 
-If you prefer not to run the extension on your personal Firefox browser, an alternative is to download a separate Firefox instance (such as Firefox Developer Edition, available at https://www.mozilla.org/en-US/firefox/developer/).
-
-
-#### MCP Server configuration
-
-After installing the browser extension, add the following configuration to your mcpServers configuration (e.g. `claude_desktop_config.json` for Claude Desktop):
-```json
-{
-    "mcpServers": {
-        "browser-control": {
-            "command": "node",
-            "args": [
-                "/path/to/repo/mcp-server/dist/server.js"
-            ],
-            "env": {
-                "EXTENSION_SECRET": "<secret_on_firefox_extension_options_page>",
-                "EXTENSION_PORT": "8089" 
-            }
-        }
-    }
-}
 ```
-Replace `/path/to/repo` with the correct path.
-
-Set the EXTENSION_SECRET to the value shown on the extension's preferences page in Firefox (you can access it at `about:addons`). You can also set the EXTENSION_PORT environment variable to specify the port that the MCP server will use to communicate with the extension (default is 8089).
-
-It might take a few seconds for the MCP server to connect to the extension.
-
-##### Configure the MCP server with Docker
-
-Alternatively, you can use a Docker-based configuration. To do so, build the mcp-server Docker image:
-```
-docker build -t browser-control-mcp .
+npm i -g browser-control-cli
+browser-control-cli install-host
 ```
 
-and use the following mcpServers configuration:
+Then install the extension from AMO.
 
-```json
-{
-    "mcpServers": {
-        "browser-control": {
-            "command": "docker",
-            "args": [
-                "run",
-                "--rm",
-                "-i",
-                "-p", "127.0.0.1:8089:8089",
-                "-e", "EXTENSION_SECRET=<secret_from_extension>",
-                "-e", "CONTAINERIZED=true",
-                "browser-control-mcp"
-            ]
-        }
-    }
-}
+## Examples
+
+```
+$ browser-control-cli list-tabs | jq '.tabs | length'
+7
+
+$ browser-control-cli open-tab https://news.ycombinator.com | jq .
+{"resource":"opened-tab-id","tabId":42}
+
+$ browser-control-cli history-search "rust" | jq '.historyItems | length'
+38
 ```
 
+## Security
+
+- The socket is per-user (`0600`), not network-exposed.
+- Reading webpage content (`get-content`) requires the user to grant
+  origin permission in the browser — the extension's `optional_permissions`
+  include `*://*/*` but Firefox prompts on first use per domain.
+- The extension ships with no runtime third-party dependencies and an
+  audit log of tool calls, viewable on the options page.
+- No remote connections. No telemetry.
+
+## Limitations
+
+- **Firefox only.** Chromium doesn't expose the same `history` /
+  `tabs.executeScript` MV2 APIs this extension relies on.
+- **macOS and Linux only** in v1. Windows support needs a named-pipe
+  path in the socket helpers.
+- **One Firefox profile at a time.** The socket path is per-user, not
+  per-profile. If two profiles try to start at once, the later one logs
+  an "already in use" error.
+
+## Development
+
+```
+npm run build                         # all workspaces
+npm --workspace=@browser-control/extension test
+npm --workspace=@browser-control-mcp/native-host test
+npm --workspace=browser-control-cli test
+```
+
+## License
+
+MIT.
