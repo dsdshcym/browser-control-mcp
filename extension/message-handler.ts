@@ -42,15 +42,6 @@ export class MessageHandler {
       case "reorder-tabs":
         await this.reorderTabs(req.correlationId, req.tabOrder);
         break;
-      case "group-tabs":
-        await this.groupTabs(
-          req.correlationId,
-          req.tabIds,
-          req.isCollapsed,
-          req.groupColor as browser.tabGroups.Color,
-          req.groupTitle
-        );
-        break;
       default:
         const _exhaustiveCheck: never = req;
         console.error("Invalid message received:", req);
@@ -243,27 +234,4 @@ export class MessageHandler {
     });
   }
 
-  private async groupTabs(
-    correlationId: string,
-    tabIds: number[],
-    isCollapsed: boolean,
-    groupColor: browser.tabGroups.Color,
-    groupTitle: string
-  ): Promise<void> {
-    const groupId = await browser.tabs.group({
-      tabIds,
-    });
-
-    let tabGroup = await browser.tabGroups.update(groupId, {
-      collapsed: isCollapsed,
-      color: groupColor,
-      title: groupTitle,
-    });
-
-    await this.client.sendResourceToServer({
-      resource: "new-tab-group",
-      correlationId,
-      groupId: tabGroup.id,
-    });
-  }
 }

@@ -32,21 +32,12 @@ export interface ReorderTabsServerMessage extends ServerMessageBase {
   tabOrder: number[];
 }
 
-export interface GroupTabsServerMessage extends ServerMessageBase {
-  cmd: "group-tabs";
-  tabIds: number[];
-  isCollapsed: boolean;
-  groupColor: string;
-  groupTitle: string;
-}
-
 export type ServerMessage =
   | OpenTabServerMessage
   | CloseTabsServerMessage
   | GetTabListServerMessage
   | GetBrowserRecentHistoryServerMessage
   | GetTabContentServerMessage
-  | ReorderTabsServerMessage
-  | GroupTabsServerMessage;
+  | ReorderTabsServerMessage;
 
 export type ServerMessageRequest = ServerMessage & { correlationId: string };

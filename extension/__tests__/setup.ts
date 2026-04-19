@@ -10,10 +10,6 @@ const mockBrowser = {
     executeScript: jest.fn(),
     move: jest.fn(),
     update: jest.fn(),
-    group: jest.fn(),
-  },
-  tabGroups: {
-    update: jest.fn(),
   },
   history: {
     search: jest.fn(),

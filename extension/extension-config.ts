@@ -55,7 +55,6 @@ export const COMMAND_TO_TOOL_ID: Record<ServerMessageRequest["cmd"], string> = {
   "get-browser-recent-history": "get-recent-browser-history",
   "get-tab-content": "get-tab-web-content",
   "reorder-tabs": "reorder-browser-tabs",
-  "group-tabs": "reorder-browser-tabs",
 };
 
 // Storage schema for tool settings
