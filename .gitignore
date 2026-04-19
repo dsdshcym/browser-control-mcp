@@ -55,3 +55,6 @@ web-ext-artifacts/
 
 # Claude Code local settings
 .claude/
+
+# Bun build temp files
+*.bun-build

@@ -7,6 +7,7 @@
   },
   "scripts": {
     "build": "esbuild src/main.ts --bundle --platform=node --target=node18 --outfile=dist/main.js --banner:js='#!/usr/bin/env node' && chmod +x dist/main.js",
+    "build:binary": "bun build --compile src/main.ts --outfile dist/browser-control-cli",
     "test": "node --test --import tsx 'src/__tests__/**/*.test.ts'"
   },
   "dependencies": {
