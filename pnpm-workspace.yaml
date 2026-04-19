@@ -1,4 +1,3 @@
 packages:
-  - 'firefox-extension'
-  - 'mcp-server'
+  - 'extension'
 
