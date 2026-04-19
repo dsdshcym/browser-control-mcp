@@ -3,6 +3,7 @@ import { CliError } from "./client";
 import { listTabs } from "./commands/list-tabs";
 import { currentTab } from "./commands/current-tab";
 import { openTab } from "./commands/open-tab";
+import { closeTabs } from "./commands/close-tabs";
 
 const USAGE = `Usage: browser-control-cli <command> [args]
 
@@ -10,6 +11,7 @@ Commands:
   list-tabs             list all open tabs as JSON
   current-tab           get the active tab in the focused window
   open-tab <url>        open a new tab at the given https:// URL
+  close-tabs <id>...    close the given tab ids
 
 General:
   --help, -h            show this help
@@ -22,6 +24,7 @@ const commands: Record<string, Handler> = {
   "list-tabs": listTabs,
   "current-tab": currentTab,
   "open-tab": openTab,
+  "close-tabs": closeTabs,
 };
 
 async function main(argv: string[]): Promise<void> {
