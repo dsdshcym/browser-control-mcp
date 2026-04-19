@@ -54,7 +54,12 @@ test("install-host: writes the manifest via the host binary", async () => {
     assert.equal(fs.existsSync(manifestFile), true, `manifest missing at ${manifestFile}`);
     const contents = JSON.parse(fs.readFileSync(manifestFile, "utf-8"));
     assert.equal(contents.name, "browser_control_cli_host");
-    assert.equal(contents.path, fs.realpathSync(hostBin));
+    // Manifest points at the launcher wrapper, not the host script directly.
+    const wrapperFile = path.join(manifestDir, "browser_control_cli_host-launcher.sh");
+    assert.equal(contents.path, wrapperFile);
+    assert.equal(fs.existsSync(wrapperFile), true, "launcher wrapper missing");
+    const wrapper = fs.readFileSync(wrapperFile, "utf-8");
+    assert.ok(wrapper.includes(fs.realpathSync(hostBin)), "wrapper should reference the host script");
   } finally {
     if (priorHome === undefined) delete process.env.HOME;
     else process.env.HOME = priorHome;

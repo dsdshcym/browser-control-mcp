@@ -22,8 +22,11 @@ async function runBridge(): Promise<void> {
 
 function runInstall(): void {
   const hostBinaryPath = fs.realpathSync(process.argv[1]);
-  const manifestFile = install({ hostBinaryPath });
-  process.stdout.write(`installed: ${manifestFile}\n`);
+  const result = install({ hostBinaryPath });
+  process.stdout.write(`installed: ${result.manifestFile}\n`);
+  process.stdout.write(`  launcher: ${result.wrapperFile}\n`);
+  process.stdout.write(`  node:     ${result.nodeBinaryPath}\n`);
+  process.stdout.write(`  host:     ${hostBinaryPath}\n`);
 }
 
 function runUninstall(): void {
