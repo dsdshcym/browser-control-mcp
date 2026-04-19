@@ -1,12 +1,12 @@
 {
-  "name": "browser-control-mcp",
+  "name": "browser-control-cli-monorepo",
   "version": "1.5.0",
   "private": true,
+  "workspaces": [
+    "common",
+    "extension"
+  ],
   "scripts": {
-    "postinstall": "npm install --prefix extension && npm install --prefix native-host",
-    "build": "nx run-many --target=build --all --parallel"
-  },
-  "devDependencies": {
-    "nx": "22.3.3"
+    "build": "npm run build --workspaces --if-present"
   }
 }
