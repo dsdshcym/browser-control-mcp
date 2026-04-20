@@ -79,7 +79,7 @@ async function main(argv: string[]): Promise<void> {
   }
 
   if (sub === "--version") {
-    await writeAndFlush(process.stdout, "browser-control-cli 1.5.0\n");
+    await writeAndFlush(process.stdout, "browser-control-cli 2.0.0\n");
     process.exit(0);
   }
 
