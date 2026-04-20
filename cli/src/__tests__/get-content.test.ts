@@ -72,3 +72,17 @@ test("get-content: rejects unknown flag", async () => {
     (err) => err instanceof CliError && /unknown flag/.test(err.message),
   );
 });
+
+test("get-content: forwards --html", async () => {
+  await withEcho(async (socketPath, received) => {
+    await getContent(["42", "--html"], { socketPath });
+    assert.equal(received[0].html, true);
+  });
+});
+
+test("get-content: default request omits html field", async () => {
+  await withEcho(async (socketPath, received) => {
+    await getContent(["42"], { socketPath });
+    assert.equal(received[0].html, undefined);
+  });
+});
