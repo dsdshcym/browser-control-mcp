@@ -64,37 +64,43 @@ const commandHelp: Record<string, string> = {
   "install-host": INSTALL_HOST_HELP,
 };
 
+async function writeAndFlush(stream: NodeJS.WriteStream, data: string): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    stream.write(data, (err) => (err ? reject(err) : resolve()));
+  });
+}
+
 async function main(argv: string[]): Promise<void> {
   const [sub, ...rest] = argv;
 
   if (!sub || sub === "--help" || sub === "-h") {
-    process.stdout.write(USAGE);
+    await writeAndFlush(process.stdout, USAGE);
     process.exit(0);
   }
 
   if (sub === "--version") {
-    process.stdout.write("browser-control-cli 1.5.0\n");
+    await writeAndFlush(process.stdout, "browser-control-cli 1.5.0\n");
     process.exit(0);
   }
 
   const handler = commands[sub];
   if (!handler) {
-    emitError(`unknown command: ${sub}`);
+    await emitError(`unknown command: ${sub}`);
   }
 
   if (rest[0] === "--help" || rest[0] === "-h") {
-    process.stdout.write(commandHelp[sub]);
+    await writeAndFlush(process.stdout, commandHelp[sub]);
     process.exit(0);
   }
 
   try {
     const result = await handler(rest);
-    emitSuccess(result);
+    await emitSuccess(result);
   } catch (err) {
     if (err instanceof CliError) {
-      emitError(err.message, err.hint);
+      await emitError(err.message, err.hint);
     } else {
-      emitError((err as Error).message ?? String(err));
+      await emitError((err as Error).message ?? String(err));
     }
   }
 }
