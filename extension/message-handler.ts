@@ -37,7 +37,7 @@ export class MessageHandler {
         await this.sendRecentHistory(req.correlationId, req.searchQuery);
         break;
       case "get-tab-content":
-        await this.sendTabsContent(req.correlationId, req.tabId, req.offset);
+        await this.sendTabsContent(req.correlationId, req.tabId, req.offset, req.html);
         break;
       case "get-current-tab":
         await this.sendCurrentTab(req.correlationId);
@@ -171,7 +171,8 @@ export class MessageHandler {
   private async sendTabsContent(
     correlationId: string,
     tabId: number,
-    offset?: number
+    offset?: number,
+    html?: boolean
   ): Promise<void> {
     const tab = await browser.tabs.get(tabId);
     if (tab.url && (await isDomainInDenyList(tab.url))) {
@@ -179,6 +180,35 @@ export class MessageHandler {
     }
 
     await this.checkForUrlPermission(tab.url);
+
+    if (html) {
+      const MAX_HTML_LENGTH = 10000000;
+      const results = await browser.tabs.executeScript(tabId, {
+        code: `
+        (function () {
+          const source = document.documentElement.outerHTML;
+          const sliced = source.substring(${Number(offset) || 0});
+          const isTruncated = sliced.length > ${MAX_HTML_LENGTH};
+          const html = isTruncated ? sliced.substring(0, ${MAX_HTML_LENGTH}) : sliced;
+          return {
+            html,
+            isTruncated,
+            totalLength: source.length,
+          };
+        })();
+      `,
+      });
+      const { html: htmlOut, isTruncated, totalLength } = results[0];
+      await this.client.sendResourceToServer({
+        resource: "tab-content",
+        tabId,
+        correlationId,
+        isTruncated,
+        html: htmlOut,
+        totalLength,
+      });
+      return;
+    }
 
     const MAX_CONTENT_LENGTH = 50_000;
     const results = await browser.tabs.executeScript(tabId, {
