@@ -1,5 +1,24 @@
 import { sendRequest, SendOptions, CliError } from "../client";
 
+export const GET_CONTENT_HELP = `Usage: browser-control-cli get-content <id> [--offset N]
+
+Read the visible text and link list from a tab. Requires the extension to have
+host permission for the tab's origin (see the options page).
+
+Flags:
+  --offset N    skip the first N characters of body text (useful for paging
+                through truncated responses)
+
+Response: {
+  resource: "tab-content",
+  tabId: number,
+  fullText: string,             // may be truncated; see isTruncated
+  isTruncated: boolean,
+  totalLength: number,          // length in chars before truncation
+  links: Array<{ url: string, text: string }>
+}
+`;
+
 export function getContent(args: string[], opts: SendOptions = {}): Promise<unknown> {
   let tabIdRaw: string | undefined;
   let offset: number | undefined;

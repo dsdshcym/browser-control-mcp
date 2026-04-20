@@ -3,6 +3,17 @@ import * as fs from "fs";
 import * as path from "path";
 import { CliError } from "../client";
 
+export const INSTALL_HOST_HELP = `Usage: browser-control-cli install-host
+
+Install the Firefox native-messaging manifest for this user so the extension
+can launch the host. Runs once per machine/profile.
+
+Response: {
+  resource: "install-host",
+  output: string   // human-readable summary from the host's install step
+}
+`;
+
 export interface InstallHostOptions {
   hostBinaryOverride?: string;
 }
