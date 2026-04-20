@@ -6,11 +6,9 @@ export interface ExtensionMessageBase {
 export interface TabContentExtensionMessage extends ExtensionMessageBase {
   resource: "tab-content";
   tabId: number;
+  html: string;
   isTruncated: boolean;
   totalLength: number;
-  fullText?: string;
-  links?: { url: string; text: string }[];
-  html?: string;
 }
 
 export interface BrowserTab {

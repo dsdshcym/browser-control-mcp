@@ -19,10 +19,9 @@ Commands:
                         → { resource: "opened-tab-id", tabId: number | undefined }
   close-tabs <id>...    close the given tab ids
                         → { resource: "tabs-closed" }
-  get-content <id>      read a tab's visible text and links (needs origin permission)
-                        [--offset N] skip N chars into body text
-                        → { resource: "tab-content", tabId, fullText, isTruncated,
-                            totalLength, links: Array<{ url, text }> }
+  get-content <id>      read a tab's rendered outerHTML (needs origin permission)
+                        [--offset N] skip N chars into the HTML
+                        → { resource: "tab-content", tabId, html, isTruncated, totalLength }
   history-search [q]    recent browser history, optionally filtered by query
                         → { resource: "history", historyItems: BrowserHistoryItem[] }
 

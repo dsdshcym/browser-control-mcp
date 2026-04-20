@@ -37,7 +37,7 @@ export class MessageHandler {
         await this.sendRecentHistory(req.correlationId, req.searchQuery);
         break;
       case "get-tab-content":
-        await this.sendTabsContent(req.correlationId, req.tabId, req.offset, req.html);
+        await this.sendTabsContent(req.correlationId, req.tabId, req.offset);
         break;
       case "get-current-tab":
         await this.sendCurrentTab(req.correlationId);
@@ -171,8 +171,7 @@ export class MessageHandler {
   private async sendTabsContent(
     correlationId: string,
     tabId: number,
-    offset?: number,
-    html?: boolean
+    offset?: number
   ): Promise<void> {
     const tab = await browser.tabs.get(tabId);
     if (tab.url && (await isDomainInDenyList(tab.url))) {
@@ -181,78 +180,29 @@ export class MessageHandler {
 
     await this.checkForUrlPermission(tab.url);
 
-    if (html) {
-      const MAX_HTML_LENGTH = 10000000;
-      const results = await browser.tabs.executeScript(tabId, {
-        code: `
-        (function () {
-          const source = document.documentElement.outerHTML;
-          const sliced = source.substring(${Number(offset) || 0});
-          const isTruncated = sliced.length > ${MAX_HTML_LENGTH};
-          const html = isTruncated ? sliced.substring(0, ${MAX_HTML_LENGTH}) : sliced;
-          return {
-            html,
-            isTruncated,
-            totalLength: source.length,
-          };
-        })();
-      `,
-      });
-      const { html: htmlOut, isTruncated, totalLength } = results[0];
-      await this.client.sendResourceToServer({
-        resource: "tab-content",
-        tabId,
-        correlationId,
-        isTruncated,
-        html: htmlOut,
-        totalLength,
-      });
-      return;
-    }
-
-    const MAX_CONTENT_LENGTH = 50_000;
+    const MAX_HTML_LENGTH = 10000000;
     const results = await browser.tabs.executeScript(tabId, {
       code: `
       (function () {
-        function getLinks() {
-          const linkElements = document.querySelectorAll('a[href]');
-          return Array.from(linkElements).map(el => ({
-            url: el.href,
-            text: el.innerText.trim() || el.getAttribute('aria-label') || el.getAttribute('title') || ''
-          })).filter(link => link.text !== '' && link.url.startsWith('https://') && !link.url.includes('#'));
-        }
-
-        function getTextContent() {
-          let isTruncated = false;
-          let text = document.body.innerText.substring(${Number(offset) || 0});
-          if (text.length > ${MAX_CONTENT_LENGTH}) {
-            text = text.substring(0, ${MAX_CONTENT_LENGTH});
-            isTruncated = true;
-          }
-          return {
-            text, isTruncated
-          }
-        }
-
-        const textContent = getTextContent();
-
+        const source = document.documentElement.outerHTML;
+        const sliced = source.substring(${Number(offset) || 0});
+        const isTruncated = sliced.length > ${MAX_HTML_LENGTH};
+        const html = isTruncated ? sliced.substring(0, ${MAX_HTML_LENGTH}) : sliced;
         return {
-          links: getLinks(),
-          fullText: textContent.text,
-          isTruncated: textContent.isTruncated,
-          totalLength: document.body.innerText.length
+          html,
+          isTruncated,
+          totalLength: source.length,
         };
       })();
     `,
     });
-    const { isTruncated, fullText, links, totalLength } = results[0];
+    const { html, isTruncated, totalLength } = results[0];
     await this.client.sendResourceToServer({
       resource: "tab-content",
       tabId,
       correlationId,
       isTruncated,
-      fullText,
-      links,
+      html,
       totalLength,
     });
   }

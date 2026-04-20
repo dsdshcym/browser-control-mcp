@@ -25,7 +25,6 @@ export interface GetTabContentServerMessage extends ServerMessageBase {
   cmd: "get-tab-content";
   tabId: number;
   offset?: number;
-  html?: boolean;
 }
 
 export interface GetCurrentTabServerMessage extends ServerMessageBase {

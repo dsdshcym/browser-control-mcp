@@ -26,10 +26,9 @@ async function withEcho<T>(fn: (socketPath: string, received: any[]) => Promise<
         correlationId: req.correlationId,
         resource: "tab-content",
         tabId: req.tabId,
-        fullText: "hello",
+        html: "<html/>",
         isTruncated: false,
-        totalLength: 5,
-        links: [],
+        totalLength: 7,
       }) + "\n");
       sock.end();
     });
@@ -45,8 +44,9 @@ async function withEcho<T>(fn: (socketPath: string, received: any[]) => Promise<
 
 test("get-content: forwards tab id", async () => {
   await withEcho(async (socketPath, received) => {
-    const reply = (await getContent(["42"], { socketPath })) as { resource: string; tabId: number };
+    const reply = (await getContent(["42"], { socketPath })) as { resource: string; tabId: number; html: string };
     assert.equal(reply.resource, "tab-content");
+    assert.equal(reply.html, "<html/>");
     assert.equal(received[0].tabId, 42);
     assert.equal(received[0].offset, undefined);
   });
@@ -73,16 +73,9 @@ test("get-content: rejects unknown flag", async () => {
   );
 });
 
-test("get-content: forwards --html", async () => {
-  await withEcho(async (socketPath, received) => {
-    await getContent(["42", "--html"], { socketPath });
-    assert.equal(received[0].html, true);
-  });
-});
-
-test("get-content: default request omits html field", async () => {
-  await withEcho(async (socketPath, received) => {
-    await getContent(["42"], { socketPath });
-    assert.equal(received[0].html, undefined);
-  });
+test("get-content: rejects --html (no longer accepted; html is the default)", async () => {
+  await assert.rejects(
+    async () => getContent(["42", "--html"]),
+    (err) => err instanceof CliError && /unknown flag/.test(err.message),
+  );
 });

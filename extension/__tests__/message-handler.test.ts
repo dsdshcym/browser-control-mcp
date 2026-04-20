@@ -329,7 +329,7 @@ describe("MessageHandler", () => {
     });
 
     describe("get-tab-content command", () => {
-      it("should get tab content and send it to the server", async () => {
+      it("should return outerHTML and send it to the server", async () => {
         // Arrange
         const request: ServerMessageRequest = {
           cmd: "get-tab-content",
@@ -343,10 +343,9 @@ describe("MessageHandler", () => {
 
         const mockScriptResult = [
           {
-            links: [{ url: "https://example.com/page", text: "Page" }],
-            fullText: "Page content",
+            html: "<html><body>Hi</body></html>",
             isTruncated: false,
-            totalLength: 12,
+            totalLength: 28,
           },
         ];
         (browser.tabs.executeScript as jest.Mock).mockResolvedValue(
@@ -362,14 +361,19 @@ describe("MessageHandler", () => {
           origins: ["https://example.com/*"],
         });
         expect(browser.tabs.executeScript).toHaveBeenCalled();
+        const scriptArg = (browser.tabs.executeScript as jest.Mock).mock
+          .calls[0][1];
+        expect(scriptArg.code).toContain("outerHTML");
+        expect(scriptArg.code).not.toContain("innerText");
+        expect(scriptArg.code).toContain("10000000");
+
         expect(mockClient.sendResourceToServer).toHaveBeenCalledWith({
           resource: "tab-content",
           tabId: 123,
           correlationId: "test-correlation-id",
           isTruncated: false,
-          fullText: "Page content",
-          links: [{ url: "https://example.com/page", text: "Page" }],
-          totalLength: 12,
+          html: "<html><body>Hi</body></html>",
+          totalLength: 28,
         });
       });
 
@@ -423,75 +427,6 @@ describe("MessageHandler", () => {
           messageHandler.handleDecodedMessage(request)
         ).rejects.toThrow();
         expect(browser.tabs.executeScript).not.toHaveBeenCalled();
-      });
-
-      it("should return outerHTML when html:true is set", async () => {
-        // Arrange
-        const request: ServerMessageRequest = {
-          cmd: "get-tab-content",
-          tabId: 123,
-          correlationId: "test-correlation-id",
-          html: true,
-        };
-
-        const mockTab = { id: 123, url: "https://example.com" };
-        (browser.tabs.get as jest.Mock).mockResolvedValue(mockTab);
-        (browser.permissions.contains as jest.Mock).mockResolvedValue(true);
-
-        const mockScriptResult = [
-          {
-            html: "<html><body>Hi</body></html>",
-            isTruncated: false,
-            totalLength: 28,
-          },
-        ];
-        (browser.tabs.executeScript as jest.Mock).mockResolvedValue(
-          mockScriptResult
-        );
-
-        // Act
-        await messageHandler.handleDecodedMessage(request);
-
-        // Assert
-        expect(browser.tabs.executeScript).toHaveBeenCalled();
-        const scriptArg = (browser.tabs.executeScript as jest.Mock).mock
-          .calls[0][1];
-        expect(scriptArg.code).toContain("outerHTML");
-        expect(scriptArg.code).not.toContain("innerText");
-
-        expect(mockClient.sendResourceToServer).toHaveBeenCalledWith({
-          resource: "tab-content",
-          tabId: 123,
-          correlationId: "test-correlation-id",
-          isTruncated: false,
-          html: "<html><body>Hi</body></html>",
-          totalLength: 28,
-        });
-      });
-
-      it("should truncate HTML at 10MB", async () => {
-        // Arrange
-        const request: ServerMessageRequest = {
-          cmd: "get-tab-content",
-          tabId: 123,
-          correlationId: "test-correlation-id",
-          html: true,
-        };
-
-        const mockTab = { id: 123, url: "https://example.com" };
-        (browser.tabs.get as jest.Mock).mockResolvedValue(mockTab);
-        (browser.permissions.contains as jest.Mock).mockResolvedValue(true);
-        (browser.tabs.executeScript as jest.Mock).mockResolvedValue([
-          { html: "<html/>", isTruncated: false, totalLength: 7 },
-        ]);
-
-        // Act
-        await messageHandler.handleDecodedMessage(request);
-
-        // Assert — the injected script should reference the 10MB cap
-        const scriptArg = (browser.tabs.executeScript as jest.Mock).mock
-          .calls[0][1];
-        expect(scriptArg.code).toContain("10000000");
       });
     });
 

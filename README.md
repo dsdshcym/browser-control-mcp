@@ -15,7 +15,7 @@ host handle everything locally over a Unix domain socket.
 | `current-tab`             | active tab in the focused window                             |
 | `open-tab <url>`          | open a new tab (https only)                                  |
 | `close-tabs <id>...`      | close one or more tabs by id                                 |
-| `get-content <id>`        | read a tab's visible text and links (prompts for origin perm) |
+| `get-content <id>`        | read a tab's rendered outerHTML (prompts for origin perm)    |
 | `history-search [query]`  | recent browser history, optionally filtered                  |
 | `install-host`            | install the Firefox native-messaging manifest for this user  |
 
