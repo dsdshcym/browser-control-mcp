@@ -75,7 +75,7 @@ host↔extension). One dependency for everyone else.
    `browser.runtime.connectNative("browser_control_cli_host")` → Firefox spawns
    the host as a child process.
 4. Host opens the Unix socket at `$XDG_RUNTIME_DIR/browser-control-cli.sock`
-   (falling back to `$TMPDIR/browser-control-cli-<uid>.sock`), mode `0600`.
+   (falling back to `~/.browser-control-cli/browser-control-cli.sock`), mode `0600`.
 5. CLI invocations connect, transact, disconnect. Host stays alive as long
    as Firefox keeps the native-messaging port open.
 6. Firefox closes or extension unloads → host process exits (stdin EOF).
@@ -83,7 +83,9 @@ host↔extension). One dependency for everyone else.
 ### Rendezvous
 
 - Socket path: `$XDG_RUNTIME_DIR/browser-control-cli.sock` if set, else
-  `$TMPDIR/browser-control-cli-<uid>.sock`, else `/tmp/browser-control-cli-<uid>.sock`.
+  `~/.browser-control-cli/browser-control-cli.sock`. Anchored to `$HOME` rather
+  than `$TMPDIR` so the CLI and the Firefox-spawned host agree even when one
+  runs under a rewritten `$TMPDIR` (e.g. a sandboxed agent harness).
 - Socket permissions: `0600`, owner-only. This replaces the HMAC-shared-secret auth.
 - The host removes a stale socket file on start (if `connect()` to it fails).
 - CLI exits non-zero with a clear error if the socket does not exist or cannot be reached

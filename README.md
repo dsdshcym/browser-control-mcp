@@ -44,8 +44,11 @@ stderr (`{"error": "...", "hint": "..."}`) with a non-zero exit code.
   line, exits.
 
 Socket path: `$XDG_RUNTIME_DIR/browser-control-cli.sock` if set,
-otherwise `$TMPDIR/browser-control-cli-<uid>.sock`. Permissions are
-`0600` — filesystem permissions replace the old HMAC shared secret.
+otherwise `~/.browser-control-cli/browser-control-cli.sock`. The path is
+deliberately anchored to `$HOME` rather than `$TMPDIR` so the CLI and the
+Firefox-spawned host agree even when one of them runs under a rewritten
+`$TMPDIR` (e.g. a sandboxed agent harness). Permissions are `0600` —
+filesystem permissions replace the old HMAC shared secret.
 
 See `docs/plans/2026-04-19-browser-control-cli-design.md` for the full
 design.

@@ -50,7 +50,7 @@ CLI ──UDS──▶ native-host ──native msg──▶ extension ──▶
 
 ### Socket path
 
-`$XDG_RUNTIME_DIR/browser-control-cli.sock` if set, else `$TMPDIR/browser-control-cli-<uid>.sock`. Mode `0600`.
+`$XDG_RUNTIME_DIR/browser-control-cli.sock` if set, else `~/.browser-control-cli/browser-control-cli.sock`. Mode `0600`. Anchored to `$HOME`, not `$TMPDIR`, so the CLI and the Firefox-spawned host resolve the same path even under a rewritten `$TMPDIR` (sandboxed agent harnesses).
 
 ### Key files
 
